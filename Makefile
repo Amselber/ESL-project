@@ -152,3 +152,10 @@ $(DFU_PACKAGE): $(OUTPUT_DIRECTORY)/nrf52840_xxaa.hex
 dfu: $(DFU_PACKAGE)
 	@echo Performing DFU with generated package
 	nrfutil dfu usb-serial -pkg $< -p $(DFU_PORT) -b 115200
+
+
+.PHONY: compile
+compile:
+	@command -v bear >/dev/null 2>&1 || { \
+		echo "bear not found. Install: sudo apt install bear"; exit 1; }
+	bear -o compile_commands.json make default
