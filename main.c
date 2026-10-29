@@ -52,6 +52,27 @@
 #include <stdint.h>
 #include "nrf_delay.h"
 #include "boards.h"
+#include "pca10059.h"
+
+#define BLINK_MS 300 // on-off led duration
+#define PAUSE_MS 800 // pause between dif leds
+#define CYCLE_MS 2000 // pause between new cycle
+
+
+/**
+ * @brief Blink a single LED a given number of times.
+ *
+ * @param[in] led_idx Order number for led
+ * @param[in] count Number of on/off blink cycles to perform.
+ */
+static void blink_led(uint32_t led_idx, uint32_t count) {
+    for (uint32_t i = 0; i < count; ++i) {
+        bsp_board_led_on(led_idx);
+        nrf_delay_ms(BLINK_MS);
+        bsp_board_led_off(led_idx);
+        nrf_delay_ms(BLINK_MS);
+    }
+}
 
 /**
  * @brief Function for application main entry.
@@ -64,11 +85,20 @@ int main(void)
     /* Toggle LEDs. */
     while (true)
     {
-        for (int i = 0; i < LEDS_NUMBER; i++)
-        {
-            bsp_board_led_invert(i);
-            nrf_delay_ms(500);
-        }
+        // device ID: #6593
+        blink_led(0, 6);
+        nrf_delay_ms(PAUSE_MS);
+
+        blink_led(1, 5);
+        nrf_delay_ms(PAUSE_MS);
+
+        blink_led(2, 9);
+        nrf_delay_ms(PAUSE_MS);
+
+        blink_led(3, 3);
+        nrf_delay_ms(PAUSE_MS);
+
+        nrf_delay_ms(CYCLE_MS);
     }
 }
 
