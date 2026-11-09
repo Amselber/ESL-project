@@ -17,6 +17,7 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(SDK_ROOT)/components/boards/boards.c \
   $(PROJ_DIR)/main.c \
+  $(PROJ_DIR)/src/esl_gpio.c \
   # $(SDK_ROOT)/components/libraries/log/src/nrf_log_frontend.c \
   # $(SDK_ROOT)/components/libraries/log/src/nrf_log_str_formatter.c \
   # $(SDK_ROOT)/components/libraries/util/app_error.c \
@@ -46,7 +47,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/integration/nrfx \
   $(SDK_ROOT)/config/nrf52840/config \
-  $(PROJ_DIR) \
+  $(PROJ_DIR)/src \
   # $(SDK_ROOT)/components/libraries/strerror \
   # $(SDK_ROOT)/components/libraries/balloc \
   # $(SDK_ROOT)/components/libraries/ringbuf \

@@ -3,11 +3,11 @@
  *
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
- * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form, except as embedded into a Nordic
  *    Semiconductor ASA integrated circuit in a product or a software update for
@@ -22,19 +22,20 @@
  * 4. This software, with or without modification, must only be used with a
  *    Nordic Semiconductor ASA integrated circuit.
  *
- * 5. Any software provided in binary form under this license must not be reverse
- *    engineered, decompiled, modified and/or disassembled.
+ * 5. Any software provided in binary form under this license must not be
+ * reverse engineered, decompiled, modified and/or disassembled.
  *
  * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED. IN NO EVENT SHALL NORDIC SEMICONDUCTOR ASA OR CONTRIBUTORS BE
  * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
  */
 /** @file
@@ -48,17 +49,13 @@
  *
  */
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "esl_gpio.h"
 #include "nrf_delay.h"
-#include "boards.h"
 #include "pca10059.h"
 
-#define BLINK_MS 300 // on-off led duration
-#define PAUSE_MS 800 // pause between dif leds
+#define BLINK_MS 300  // on-off led duration
+#define PAUSE_MS 800  // pause between dif leds
 #define CYCLE_MS 2000 // pause between new cycle
-#define NUM_DIGITS 4
-
 
 /**
  * @brief Blink a single LED a given number of times.
@@ -67,34 +64,33 @@
  * @param[in] count Number of on/off blink cycles to perform.
  */
 static void blink_led(uint32_t led_idx, uint32_t count) {
-    for (uint32_t i = 0; i < count; ++i) {
-        bsp_board_led_on(led_idx);
-        nrf_delay_ms(BLINK_MS);
-        bsp_board_led_off(led_idx);
-        nrf_delay_ms(BLINK_MS);
-    }
+  for (uint32_t i = 0; i < count; ++i) {
+    led_idx_on(led_idx);
+    nrf_delay_ms(BLINK_MS);
+    led_idx_off(led_idx);
+    nrf_delay_ms(BLINK_MS);
+  }
 }
 
 /**
  * @brief Function for application main entry.
  */
-int main(void)
-{
-    /* Configure board. */
-    bsp_board_init(BSP_INIT_LEDS);
+int main(void) {
+  /* Configure board. */
+  leds_init();
 
-    int id_digits[NUM_DIGITS] = {6, 5, 9, 3};
-    /* Toggle LEDs. */
-    while (true)
-    {
-        // device ID: #6593
-        for (int i = 0; i < NUM_DIGITS; ++i) {
-            blink_led(i, id_digits[i]);
-            nrf_delay_ms(PAUSE_MS);
-        }
-
-        nrf_delay_ms(CYCLE_MS);
+  int id_leds[LEDS_NUMBER] = {6, 5, 9, 3};
+  /* Toggle LEDs. */
+  nrf_delay_ms(CYCLE_MS + 500);
+  while (true) {
+    // device ID: #6593
+    for (int i = 0; i < LEDS_NUMBER; ++i) {
+      blink_led(i, id_leds[i]);
+      nrf_delay_ms(PAUSE_MS);
     }
+
+    nrf_delay_ms(CYCLE_MS);
+  }
 }
 
 /**
