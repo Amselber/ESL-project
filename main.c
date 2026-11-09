@@ -57,6 +57,7 @@
 #define BLINK_MS 300 // on-off led duration
 #define PAUSE_MS 800 // pause between dif leds
 #define CYCLE_MS 2000 // pause between new cycle
+#define NUM_DIGITS 4
 
 
 /**
@@ -82,21 +83,15 @@ int main(void)
     /* Configure board. */
     bsp_board_init(BSP_INIT_LEDS);
 
+    int id_digits[NUM_DIGITS] = {6, 5, 9, 3};
     /* Toggle LEDs. */
     while (true)
     {
         // device ID: #6593
-        blink_led(0, 6);
-        nrf_delay_ms(PAUSE_MS);
-
-        blink_led(1, 5);
-        nrf_delay_ms(PAUSE_MS);
-
-        blink_led(2, 9);
-        nrf_delay_ms(PAUSE_MS);
-
-        blink_led(3, 3);
-        nrf_delay_ms(PAUSE_MS);
+        for (int i = 0; i < NUM_DIGITS; ++i) {
+            blink_led(i, id_digits[i]);
+            nrf_delay_ms(PAUSE_MS);
+        }
 
         nrf_delay_ms(CYCLE_MS);
     }
