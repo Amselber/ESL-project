@@ -12,6 +12,6 @@ void led_idx_off(uint32_t led_idx);
 
 // Button
 void btn_init(void);
-bool btn_get_state(uint32_t btn_idx);
+bool btn_get_state();
 
 #endif // LEDS_H

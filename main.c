@@ -49,13 +49,17 @@
  *
  */
 
-#include "esl_gpio.h"
+#include "gpio.h"
 #include "nrf_delay.h"
 #include "pca10059.h"
+#include "src/gpio.h"
+#include <stdint.h>
 
 #define BLINK_MS 300  // on-off led duration
-#define PAUSE_MS 800  // pause between dif leds
-#define CYCLE_MS 2000 // pause between new cycle
+#define PAUSE_MS 500  // pause between dif leds
+#define CYCLE_MS 500 // pause between new cycle
+
+#define LEDS_BLINKS {6, 5, 9, 3};
 
 /**
  * @brief Blink a single LED a given number of times.
@@ -63,13 +67,10 @@
  * @param[in] led_idx Order number for led
  * @param[in] count Number of on/off blink cycles to perform.
  */
-static void blink_led(uint32_t led_idx, uint32_t count) {
-  for (uint32_t i = 0; i < count; ++i) {
-    led_idx_on(led_idx);
-    nrf_delay_ms(BLINK_MS);
-    led_idx_off(led_idx);
-    nrf_delay_ms(BLINK_MS);
-  }
+static void blink_led(uint32_t led_idx) {
+  led_idx_on(led_idx);
+  nrf_delay_ms(BLINK_MS);
+  led_idx_off(led_idx);
 }
 
 /**
@@ -78,15 +79,31 @@ static void blink_led(uint32_t led_idx, uint32_t count) {
 int main(void) {
   /* Configure board. */
   leds_init();
+  btn_init();
 
-  int id_leds[LEDS_NUMBER] = {6, 5, 9, 3};
-  /* Toggle LEDs. */
+  // device ID: #6593
+  const int leds_curr_counter_default[LEDS_NUMBER] = LEDS_BLINKS;
+  int leds_curr_counter[LEDS_NUMBER] = LEDS_BLINKS;
+  int leds_curr_idx = 0;
+
+  // Start delay
   nrf_delay_ms(CYCLE_MS + 500);
   while (true) {
-    // device ID: #6593
-    for (int i = 0; i < LEDS_NUMBER; ++i) {
-      blink_led(i, id_leds[i]);
-      nrf_delay_ms(PAUSE_MS);
+    if (btn_get_state()) {
+        // led_idx_off(leds_curr_idx);
+        if (leds_curr_idx < LEDS_NUMBER) {
+            if (leds_curr_counter[leds_curr_idx] > 0) {
+                blink_led(leds_curr_idx);
+                --leds_curr_counter[leds_curr_idx];
+            } else {
+                leds_curr_counter[leds_curr_idx] = leds_curr_counter_default[leds_curr_idx];
+                ++leds_curr_idx;
+            }
+        } else {
+            leds_curr_idx = 0;
+        }
+    } else {
+        // led_idx_on(leds_curr_idx);
     }
 
     nrf_delay_ms(CYCLE_MS);

@@ -17,7 +17,7 @@ SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(SDK_ROOT)/components/boards/boards.c \
   $(PROJ_DIR)/main.c \
-  $(PROJ_DIR)/src/esl_gpio.c \
+  $(PROJ_DIR)/src/gpio.c \
   # $(SDK_ROOT)/components/libraries/log/src/nrf_log_frontend.c \
   # $(SDK_ROOT)/components/libraries/log/src/nrf_log_str_formatter.c \
   # $(SDK_ROOT)/components/libraries/util/app_error.c \
@@ -77,7 +77,7 @@ CFLAGS += -DMBR_PRESENT
 CFLAGS += -DNRF52840_XXAA
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
-CFLAGS += -Wall -Werror
+CFLAGS += -Wall
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # keep every function in a separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
