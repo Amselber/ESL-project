@@ -5,7 +5,7 @@ DFU_PACKAGE      := $(OUTPUT_DIRECTORY)/nrf52840_xxaa.dfu
 DFU_PORT         ?= /dev/ttyACM0
 
 
-SDK_ROOT ?= /home/user/devel/esl-nsdk
+SDK_ROOT ?= $(HOME)/devel/esl-nsdk
 PROJ_DIR := ./
 
 $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
@@ -13,28 +13,18 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/src/app.c \
+  $(PROJ_DIR)/src/btn.c \
+  $(PROJ_DIR)/src/led.c \
+  $(PROJ_DIR)/src/main.c \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
-  $(SDK_ROOT)/components/boards/boards.c \
-  $(PROJ_DIR)/main.c \
-  $(PROJ_DIR)/src/esl_gpio.c \
-  # $(SDK_ROOT)/components/libraries/log/src/nrf_log_frontend.c \
-  # $(SDK_ROOT)/components/libraries/log/src/nrf_log_str_formatter.c \
-  # $(SDK_ROOT)/components/libraries/util/app_error.c \
-  # $(SDK_ROOT)/components/libraries/util/app_error_handler_gcc.c \
-  # $(SDK_ROOT)/components/libraries/util/app_error_weak.c \
-  # $(SDK_ROOT)/components/libraries/util/app_util_platform.c \
-  # $(SDK_ROOT)/components/libraries/atomic/nrf_atomic.c \
-  # $(SDK_ROOT)/components/libraries/balloc/nrf_balloc.c \
-  # $(SDK_ROOT)/external/fprintf/nrf_fprintf.c \
-  # $(SDK_ROOT)/external/fprintf/nrf_fprintf_format.c \
-  # $(SDK_ROOT)/components/libraries/memobj/nrf_memobj.c \
-  # $(SDK_ROOT)/components/libraries/ringbuf/nrf_ringbuf.c \
-  # $(SDK_ROOT)/components/libraries/strerror/nrf_strerror.c \
-  # $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
+  $(SDK_ROOT)/components/boards/boards.c
 
 # Include folders common to all targets
 INC_FOLDERS += \
+  $(PROJ_DIR)/src \
+  $(PROJ_DIR)/config \
   $(SDK_ROOT)/components \
   $(SDK_ROOT)/modules/nrfx \
   $(SDK_ROOT)/modules/nrfx/mdk \
@@ -46,18 +36,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/delay \
   $(SDK_ROOT)/components/boards \
   $(SDK_ROOT)/integration/nrfx \
-  $(SDK_ROOT)/config/nrf52840/config \
-  $(PROJ_DIR)/src \
-  # $(SDK_ROOT)/components/libraries/strerror \
-  # $(SDK_ROOT)/components/libraries/balloc \
-  # $(SDK_ROOT)/components/libraries/ringbuf \
-  # $(SDK_ROOT)/components/libraries/bsp \
-  # $(SDK_ROOT)/components/libraries/log \
-  # $(SDK_ROOT)/components/libraries/experimental_section_vars \
-  # $(SDK_ROOT)/components/libraries/atomic \
-  # $(SDK_ROOT)/components/libraries/memobj \
-  # $(SDK_ROOT)/external/fprintf \
-  # $(SDK_ROOT)/components/libraries/log/src \
+  $(SDK_ROOT)/config/nrf52840/config
 
 # Libraries common to all targets
 LIB_FILES += \
@@ -77,7 +56,7 @@ CFLAGS += -DMBR_PRESENT
 CFLAGS += -DNRF52840_XXAA
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
-CFLAGS += -Wall -Werror
+CFLAGS += -Wall
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # keep every function in a separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
@@ -127,6 +106,9 @@ help:
 	@echo following targets are available:
 	@echo		nrf52840_xxaa
 	@echo		flash      - flashing binary
+	@echo		dfu        - build DFU package and flash via nrfutil
+	@echo		compile    - generate compile_commands.json
+	@echo		clean      - remove build artifacts
 
 TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc
 
@@ -158,4 +140,9 @@ dfu: $(DFU_PACKAGE)
 compile:
 	@command -v bear >/dev/null 2>&1 || { \
 		echo "bear not found. Install: sudo apt install bear"; exit 1; }
-	bear -o compile_commands.json make default
+	$(MAKE) clean
+	bear -o compile_commands.json make -B default
+
+clean:
+	rm -rf $(OUTPUT_DIRECTORY)
+	rm -f compile_commands.json
