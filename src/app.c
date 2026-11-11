@@ -41,7 +41,7 @@ void app_init(void) {
 void app_process(void) {
   if (btn_get_state()) {
     // !uncomment for optional task
-    // led_idx_off(leds_curr_idx);
+    led_idx_off(curr_idx);
     if (curr_idx < LEDS_NUMBER) {
       if (curr_counter[curr_idx] > 0) {
         blink_led(curr_idx);
@@ -55,7 +55,7 @@ void app_process(void) {
     }
   } else {
     // !uncomment for optional task
-    // led_idx_on(leds_curr_idx);
+    led_idx_on(curr_idx);
   }
   nrf_delay_ms(PAUSE_MS);
 }
