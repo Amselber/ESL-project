@@ -141,8 +141,5 @@ compile:
 	@command -v bear >/dev/null 2>&1 || { \
 		echo "bear not found. Install: sudo apt install bear"; exit 1; }
 	$(MAKE) clean
-	bear -o compile_commands.json make -B default
-
-clean:
-	rm -rf $(OUTPUT_DIRECTORY)
 	rm -f compile_commands.json
+	bear -o compile_commands.json make -B default
