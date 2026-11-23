@@ -4,17 +4,20 @@
  *
  */
 
-#include "app.h"
+// #include "app.h"
+#include "log.h"
 #include <stdbool.h>
 
-/**
- * @brief Entry point
- */
-int main(void) {
-  app_init();
 
-  while (true) {
-    // device ID: #6593
-    app_process();
-  }
+/**
+ * @brief Function for application main entry.
+ */
+int main(void)
+{
+    log_init();
+
+    while (true)
+    {
+        log_usb_process();
+    }
 }
