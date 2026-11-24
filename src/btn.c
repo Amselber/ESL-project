@@ -1,11 +1,9 @@
 #include "btn.h"
 #include "app_error.h"
 #include "nrf_drv_gpiote.h"
-#include "nrf_gpio.h"
 #include <stdbool.h>
 
 #define BUTTON NRF_GPIO_PIN_MAP(1, 6)
-#define BUTTON_PULL NRF_GPIO_PIN_PULLUP
 
 volatile bool is_button_pressed = false;
 
@@ -22,8 +20,6 @@ static void button_event_handler(nrf_drv_gpiote_pin_t pin,
 }
 
 void btn_init(void) {
-  // nrf_gpio_cfg_input(BUTTON, BUTTON_PULL);
-
   ret_code_t err_code;
 
   // Инициализируем модуль GPIOTE, если он еще не инициализирован
@@ -41,9 +37,4 @@ void btn_init(void) {
 
      // Включаем отслеживание событий для пина кнопки
      nrf_drv_gpiote_in_event_enable(BUTTON, true);
-}
-
-bool btn_get_state() {
-  bool pin_set = nrf_gpio_pin_read(BUTTON) ? true : false;
-  return (pin_set == (BUTTON_ACTIVE_STATE ? true : false));
 }
