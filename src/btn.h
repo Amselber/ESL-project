@@ -5,6 +5,6 @@
 
 void btn_init(void);
 
-extern volatile bool is_button_pressed;
+extern volatile bool g_isBlinkingActive;
 
 #endif // !BTN_H

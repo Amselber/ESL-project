@@ -27,8 +27,6 @@ static blink_state_t state      = STATE_FADE_IN;
 static uint16_t      curr_duty  = 0;
 static uint16_t      hold_ticks = 0;
 
-extern volatile bool is_button_pressed;
-
 /**
  * @brief Application init
  * run before app_proccess()
@@ -46,7 +44,7 @@ void app_init(void) {
 void app_process(void) {
     // Если кнопка отпущена — просто выходим.
     // Все переменные (state, curr_duty, curr_idx, hold_ticks) сохраняют свои значения!
-    if (!is_button_pressed) {
+    if (!g_isBlinkingActive) {
         return;
     }
 
