@@ -8,4 +8,6 @@
 void btn_init(void);
 bool btn_get_state();
 
+extern volatile bool is_button_pressed;
+
 #endif // !BTN_H

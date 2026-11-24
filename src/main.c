@@ -4,8 +4,8 @@
  *
  */
 
-// #include "app.h"
-#include "log.h"
+#include "app.h"
+// #include "log.h"
 #include <stdbool.h>
 
 /**
@@ -13,11 +13,12 @@
  */
 int main(void)
 {
-    log_init();
-    // app_init();
+    // log_init();
+    app_init();
 
     while (true)
     {
-        log_usb_process();
+        // log_usb_process();
+        app_process();
     }
 }

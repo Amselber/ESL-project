@@ -14,6 +14,8 @@ static const uint8_t default_counter[LEDS_NUMBER] = LEDS_BLINKS;
 static uint8_t curr_counter[LEDS_NUMBER] = LEDS_BLINKS;
 static uint8_t curr_idx = 0;
 
+extern volatile bool is_button_pressed;
+
 /**
  * @brief Blink a single LED a given number of times.
  *
@@ -39,7 +41,7 @@ void app_init(void) {
  * run in main loop
  */
 void app_process(void) {
-  if (btn_get_state()) {
+  if (is_button_pressed) {
     // !uncomment for optional task
     // led_idx_off(curr_idx);
     if (curr_idx < LEDS_NUMBER) {
