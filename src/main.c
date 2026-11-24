@@ -8,13 +8,13 @@
 #include "log.h"
 #include <stdbool.h>
 
-
 /**
  * @brief Function for application main entry.
  */
 int main(void)
 {
     log_init();
+    // app_init();
 
     while (true)
     {

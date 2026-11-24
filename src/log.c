@@ -72,7 +72,7 @@ void log_init(void) {
 
   NRF_LOG_DEBUG("Init timers");
   ret = app_timer_init();
-  APP_ERROR_CHECK(ret);
+  // APP_ERROR_CHECK(ret);
 
   NRF_LOG_DEBUG("Init log timer");
   ret = app_timer_create(&gs_log_timer, APP_TIMER_MODE_REPEATED,
