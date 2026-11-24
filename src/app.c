@@ -4,28 +4,30 @@
 #include "nrf_delay.h"
 #include <stdint.h>
 
-#define BLINK_MS 300 // on-off led duration
-#define PAUSE_MS 500 // pause between dif leds
+#define FADE_STEP 5     // Шаг изменения яркости (скорость)
+#define STEP_DELAY_MS 2 // Длительность одного тика автомата (2 мс)
+#define HOLD_TICKS 50 // Сколько тиков держать 100% или 0% (50 * 2 мс = 100 мс)
 
 // device ID: #6593
 #define LEDS_BLINKS {6, 5, 9, 3};
+
+typedef enum {
+  STATE_FADE_IN,  // Плавное разгорание (0% -> 100%)
+  STATE_LED_ON,   // Светодиод полностью горит (100%)
+  STATE_FADE_OUT, // Плавное затухание (100% -> 0%)
+  STATE_LED_OFF   // Светодиод полностью выключен (0%)
+} blink_state_t;
 
 static const uint8_t default_counter[LEDS_NUMBER] = LEDS_BLINKS;
 static uint8_t curr_counter[LEDS_NUMBER] = LEDS_BLINKS;
 static uint8_t curr_idx = 0;
 
-extern volatile bool is_button_pressed;
+// Переменные состояния (сохраняются при отпускании кнопки)
+static blink_state_t state      = STATE_FADE_IN;
+static uint16_t      curr_duty  = 0;
+static uint16_t      hold_ticks = 0;
 
-/**
- * @brief Blink a single LED a given number of times.
- *
- * @param[in] led_idx Order number for led
- */
-static void blink_led(uint32_t led_idx) {
-  led_idx_on(led_idx);
-  nrf_delay_ms(BLINK_MS);
-  led_idx_off(led_idx);
-}
+extern volatile bool is_button_pressed;
 
 /**
  * @brief Application init
@@ -40,24 +42,72 @@ void app_init(void) {
  * @brief Application process
  * run in main loop
  */
+
 void app_process(void) {
-  if (is_button_pressed) {
-    // !uncomment for optional task
-    // led_idx_off(curr_idx);
-    if (curr_idx < LEDS_NUMBER) {
-      if (curr_counter[curr_idx] > 0) {
-        blink_led(curr_idx);
-        --curr_counter[curr_idx];
-      } else {
+    // Если кнопка отпущена — просто выходим.
+    // Все переменные (state, curr_duty, curr_idx, hold_ticks) сохраняют свои значения!
+    if (!is_button_pressed) {
+        return;
+    }
+
+    // Проверяем, не закончилась ли последовательность всех 4 светодиодов
+    if (curr_idx >= LEDS_NUMBER) {
+        curr_idx = 0;
+        return;
+    }
+
+    // Если текущий светодиод отмигал своё количество раз — переходим к следующему
+    if (curr_counter[curr_idx] == 0) {
         curr_counter[curr_idx] = default_counter[curr_idx];
         ++curr_idx;
-      }
-    } else {
-      curr_idx = 0;
+        state = STATE_FADE_IN;
+        return;
     }
-  } else {
-    // !uncomment for optional task
-    // led_idx_on(curr_idx);
-  }
-  nrf_delay_ms(PAUSE_MS);
+
+    // Основной конечный автомат
+    switch (state) {
+        case STATE_FADE_IN:
+            curr_duty += FADE_STEP;
+            if (curr_duty >= PWM_MAX_DUTY) {
+                curr_duty = PWM_MAX_DUTY;
+                led_idx_on(curr_idx);       // Явное включение на 100%
+                hold_ticks = HOLD_TICKS;    // Заряжаем таймер удержания
+                state = STATE_LED_ON;
+            } else {
+                led_idx_set_duty(curr_idx, curr_duty);
+            }
+            break;
+
+        case STATE_LED_ON:
+            // Держим светодиод включенным (если пауза не нужна, можно сразу менять state)
+            if (hold_ticks > 0) {
+                --hold_ticks;
+            } else {
+                state = STATE_FADE_OUT;
+            }
+            break;
+
+        case STATE_FADE_OUT:
+            if (curr_duty > FADE_STEP) {
+                curr_duty -= FADE_STEP;
+                led_idx_set_duty(curr_idx, curr_duty);
+            } else {
+                curr_duty = 0;
+                led_idx_off(curr_idx);      // Явное выключение (0%)
+                hold_ticks = HOLD_TICKS;
+                state = STATE_LED_OFF;
+            }
+            break;
+
+        case STATE_LED_OFF:
+            if (hold_ticks > 0) {
+                --hold_ticks;
+            } else {
+                --curr_counter[curr_idx];   // Один полный цикл мигания завершён
+                state = STATE_FADE_IN;
+            }
+            break;
+    }
+
+    nrf_delay_ms(STEP_DELAY_MS);
 }

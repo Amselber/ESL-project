@@ -1,15 +1,25 @@
 #include "led.h"
 #include "nrf_gpio.h"
+#include "nrfx_pwm.h"
 #include <stdint.h>
 
-#define LED1_Y         NRF_GPIO_PIN_MAP(0,6)
-#define LED2_R         NRF_GPIO_PIN_MAP(0,8)
-#define LED2_G         NRF_GPIO_PIN_MAP(1,9)
-#define LED2_B         NRF_GPIO_PIN_MAP(0,12)
+#define LED1_Y NRF_GPIO_PIN_MAP(0, 6)
+#define LED2_R NRF_GPIO_PIN_MAP(0, 8)
+#define LED2_G NRF_GPIO_PIN_MAP(1, 9)
+#define LED2_B NRF_GPIO_PIN_MAP(0, 12)
 
-#define LEDS_LIST { LED1_Y, LED2_R, LED2_G, LED2_B }
+// #define LEDS_LIST {LED1_Y, LED2_R, LED2_G, LED2_B}
 
-static const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
+// static const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
+
+static nrfx_pwm_t m_pwm0 = NRFX_PWM_INSTANCE(0);
+static nrf_pwm_values_individual_t m_pwm_values;
+
+static nrf_pwm_sequence_t const m_pwm_seq = {
+    .values.p_individual = &m_pwm_values,
+    .length = NRF_PWM_VALUES_LENGTH(m_pwm_values),
+    .repeats = 0,
+    .end_delay = 0};
 
 static void gpio_output_voltage_setup(void) {
   // Configure UICR_REGOUT0 register only if it is set to default value.
@@ -42,18 +52,51 @@ void led_init(void) {
     gpio_output_voltage_setup();
   }
 
-  for (uint32_t i = 0; i < LEDS_NUMBER; ++i) {
-    nrf_gpio_cfg_output(leds_list[i]);
+  // for (uint32_t i = 0; i < LEDS_NUMBER; ++i) {
+  //   nrf_gpio_cfg_output(leds_list[i]);
+  //   led_idx_off(i);
+  // }
+
+  uint32_t led_pins[LEDS_NUMBER] = {
+      LED1_Y | NRFX_PWM_PIN_INVERTED, LED2_R | NRFX_PWM_PIN_INVERTED,
+      LED2_G | NRFX_PWM_PIN_INVERTED, LED2_B | NRFX_PWM_PIN_INVERTED};
+
+  nrfx_pwm_config_t config = {
+      .output_pins = {led_pins[0], led_pins[1], led_pins[2], led_pins[3]},
+      .irq_priority = APP_IRQ_PRIORITY_LOWEST,
+      .base_clock = NRF_PWM_CLK_1MHz, // 1 МГц / 1000 = 1 кГц ШИМ
+      .count_mode = NRF_PWM_MODE_UP,
+      .top_value = PWM_MAX_DUTY,
+      .load_mode = NRF_PWM_LOAD_INDIVIDUAL,
+      .step_mode = NRF_PWM_STEP_AUTO};
+
+  APP_ERROR_CHECK(nrfx_pwm_init(&m_pwm0, &config, NULL));
+
+  // Выключаем все светодиоды на старте
+  for (uint8_t i = 0; i < LEDS_NUMBER; i++) {
     led_idx_off(i);
   }
+
+  // Запускаем аппаратный ШИМ в бесконечном цикле
+  nrfx_pwm_simple_playback(&m_pwm0, &m_pwm_seq, 1, NRFX_PWM_FLAG_LOOP);
+}
+
+void led_idx_set_duty(uint32_t led_idx, uint16_t duty) {
+    if (led_idx >= LEDS_NUMBER) return;
+    if (duty > PWM_MAX_DUTY) duty = PWM_MAX_DUTY;
+
+    uint16_t *channels = (uint16_t *)&m_pwm_values;
+    channels[led_idx] = duty;
 }
 
 void led_idx_on(uint32_t led_idx) {
-  ASSERT(led_idx < LEDS_NUMBER);
-  nrf_gpio_pin_write(leds_list[led_idx], LEDS_ACTIVE_STATE ? 1 : 0);
+  // ASSERT(led_idx < LEDS_NUMBER);
+  // nrf_gpio_pin_write(leds_list[led_idx], LEDS_ACTIVE_STATE ? 1 : 0);
+  led_idx_set_duty(led_idx, PWM_MAX_DUTY); // 100% яркости
 }
 
 void led_idx_off(uint32_t led_idx) {
-  ASSERT(led_idx < LEDS_NUMBER);
-  nrf_gpio_pin_write(leds_list[led_idx], LEDS_ACTIVE_STATE ? 0 : 1);
+  // ASSERT(led_idx < LEDS_NUMBER);
+  // nrf_gpio_pin_write(leds_list[led_idx], LEDS_ACTIVE_STATE ? 0 : 1);
+  led_idx_set_duty(led_idx, 0); // 0% яркости
 }
