@@ -57,15 +57,6 @@ static void debounce_timeout_handler(void *p_context) {
 
 static void button_event_handler(nrf_drv_gpiote_pin_t pin,
                                  nrf_gpiote_polarity_t action) {
-  // if (pin == BUTTON) {
-  //   // На платах Nordic кнопка при нажатии замыкает пин на землю (0)
-  //   if (nrf_gpio_pin_read(BUTTON) == 0) {
-  //     g_isBlinkingActive = true;
-  //   } else {
-  //     g_isBlinkingActive = false;
-  //   }
-  // }
-
   if (pin == BUTTON) {
     // Перезапускаем таймер антидребезга (если контакт дребезжит, таймер просто
     // сдвинется)
