@@ -5,8 +5,6 @@
 
 #define PWM_MAX_DUTY 1000 // 100% скважности (при частоте 1 кГц)
 
-#define LEDS_ACTIVE_STATE 0
-
 #define LEDS_NUMBER 4
 
 #define LED_Y 0

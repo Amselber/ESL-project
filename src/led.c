@@ -8,10 +8,6 @@
 #define LED2_G NRF_GPIO_PIN_MAP(1, 9)
 #define LED2_B NRF_GPIO_PIN_MAP(0, 12)
 
-// #define LEDS_LIST {LED1_Y, LED2_R, LED2_G, LED2_B}
-
-// static const uint8_t leds_list[LEDS_NUMBER] = LEDS_LIST;
-
 static nrfx_pwm_t m_pwm0 = NRFX_PWM_INSTANCE(0);
 static nrf_pwm_values_individual_t m_pwm_values;
 
@@ -52,11 +48,6 @@ void led_init(void) {
     gpio_output_voltage_setup();
   }
 
-  // for (uint32_t i = 0; i < LEDS_NUMBER; ++i) {
-  //   nrf_gpio_cfg_output(leds_list[i]);
-  //   led_idx_off(i);
-  // }
-
   uint32_t led_pins[LEDS_NUMBER] = {
       LED1_Y | NRFX_PWM_PIN_INVERTED, LED2_R | NRFX_PWM_PIN_INVERTED,
       LED2_G | NRFX_PWM_PIN_INVERTED, LED2_B | NRFX_PWM_PIN_INVERTED};
@@ -90,13 +81,9 @@ void led_idx_set_duty(uint32_t led_idx, uint16_t duty) {
 }
 
 void led_idx_on(uint32_t led_idx) {
-  // ASSERT(led_idx < LEDS_NUMBER);
-  // nrf_gpio_pin_write(leds_list[led_idx], LEDS_ACTIVE_STATE ? 1 : 0);
   led_idx_set_duty(led_idx, PWM_MAX_DUTY); // 100% яркости
 }
 
 void led_idx_off(uint32_t led_idx) {
-  // ASSERT(led_idx < LEDS_NUMBER);
-  // nrf_gpio_pin_write(leds_list[led_idx], LEDS_ACTIVE_STATE ? 0 : 1);
   led_idx_set_duty(led_idx, 0); // 0% яркости
 }
