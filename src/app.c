@@ -4,6 +4,7 @@
 #include "btn.h"
 #include "led.h"
 #include "nrf_log.h"
+#include "nvm_storage.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -188,12 +189,23 @@ void app_init(void) {
                              APP_TIMER_TICKS(APP_TICK_INTERVAL_MS), NULL);
   APP_ERROR_CHECK(err_code);
 
-  // Зажигаем стартовый цвет HSV(335, 100, 100) при подаче питания
+  // Загружаем сохранённый цвет из Flash или устанавливаем цвет по умолчанию
+  hsv_color_t saved_color;
+  if (nvm_load_hsv(&saved_color)) {
+    curr_h = saved_color.h;
+    curr_s = saved_color.s;
+    curr_v = saved_color.v;
+    NRF_LOG_INFO("[APP] Loaded saved HSV(%d, %d, %d)", curr_h, curr_s, curr_v);
+  } else {
+    curr_h = DEFAULT_HUE;
+    curr_s = DEFAULT_SAT;
+    curr_v = DEFAULT_VAL;
+    NRF_LOG_INFO("[APP] First start. Default HSV(%d, %d, %d)", curr_h, curr_s,
+                 curr_v);
+  }
+
   update_led2_hsv(curr_h, curr_s, curr_v);
   led_idx_off(LED_Y);
-
-  NRF_LOG_INFO("[APP] Initialized. Default HSV(%d, %d, %d)", curr_h, curr_s,
-               curr_v);
 }
 
 void app_process(void) {
@@ -205,6 +217,10 @@ void app_process(void) {
 
     if (curr_mode == MODE_NO_INPUT) {
       led_idx_off(LED_Y);
+
+      // Сохраняем текущий цвет в NVMC при входе в первый режим (No input)
+      hsv_color_t color_to_save = {.h = curr_h, .s = curr_s, .v = curr_v};
+      nvm_save_hsv(&color_to_save);
     } else {
       led_idx_on(LED_Y);
     }

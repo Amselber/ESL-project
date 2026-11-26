@@ -63,6 +63,7 @@ SRC_FILES += \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf.c \
   $(SDK_ROOT)/external/fprintf/nrf_fprintf_format.c \
   $(SDK_ROOT)/external/utf_converter/utf.c \
+  $(PROJ_DIR)/src/nvm_storage.c \
   $(PROJ_DIR)/src/app.c \
   $(PROJ_DIR)/src/btn.c \
   $(PROJ_DIR)/src/led.c \
