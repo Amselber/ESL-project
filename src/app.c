@@ -3,11 +3,12 @@
 #include "led.h"
 #include "nrf_delay.h"
 #include "nrf_log.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #define FADE_STEP 5     // Шаг изменения яркости (скорость)
 #define STEP_DELAY_MS 2 // Длительность одного тика автомата (2 мс)
-#define HOLD_TICKS 50 // Сколько тиков держать 100% или 0% (50 * 2 мс = 100 мс)
+#define HOLD_TICKS 50   // Сколько тиков держать 100% или 0% (50 * 2 мс = 100 мс)
 
 // device ID: #6593
 #define LEDS_BLINKS {6, 5, 9, 3}
@@ -24,9 +25,21 @@ static uint8_t curr_counter[LEDS_NUMBER] = LEDS_BLINKS;
 static uint8_t curr_idx = 0;
 
 // Переменные состояния (сохраняются при остановке)
-static blink_state_t state = STATE_FADE_IN;
-static uint16_t curr_duty = 0;
-static uint16_t hold_ticks = 0;
+static blink_state_t state      = STATE_FADE_IN;
+static uint16_t      curr_duty  = 0;
+static uint16_t      hold_ticks = 0;
+
+// Локальный флаг активности (управляется только через callback кнопки)
+static volatile bool is_blinking_active = false;
+
+/**
+ * @brief Callback-обработчик событий от модуля btn.c
+ */
+static void on_button_event(btn_event_t event) {
+  if (event == BTN_EVENT_DOUBLE_CLICK) {
+    is_blinking_active = !is_blinking_active;
+  }
+}
 
 /**
  * @brief Application init
@@ -34,7 +47,7 @@ static uint16_t hold_ticks = 0;
  */
 void app_init(void) {
   led_init();
-  btn_init();
+  btn_init(on_button_event); // Регистрируем callback в модуле кнопки
   NRF_LOG_INFO("[APP] Initialized");
 }
 
@@ -44,9 +57,8 @@ void app_init(void) {
  */
 void app_process(void) {
   // Если режим мигания выключен — просто выходим.
-  // Все переменные (state, curr_duty, curr_idx, hold_ticks) сохраняют свои
-  // значения!
-  if (!g_isBlinkingActive) {
+  // Все переменные (state, curr_duty, curr_idx, hold_ticks) сохраняют свои значения!
+  if (!is_blinking_active) {
     return;
   }
 
