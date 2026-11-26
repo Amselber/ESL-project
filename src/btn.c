@@ -1,7 +1,6 @@
 #include "btn.h"
 #include "app_error.h"
 #include "app_timer.h"
-#include "nrf_drv_clock.h"
 #include "nrf_drv_gpiote.h"
 #include <stdbool.h>
 
@@ -18,17 +17,6 @@ static uint8_t click_count = 0;
 // Создаём ID для двух одноразовых таймеров
 APP_TIMER_DEF(m_debounce_timer);
 APP_TIMER_DEF(m_double_click_timer);
-
-// Включаем низкочастотный генератор LFCLK (обязательно для app_timer!)
-static void lfclk_init(void) {
-  ret_code_t err_code = nrf_drv_clock_init();
-  APP_ERROR_CHECK(err_code);
-
-  nrf_drv_clock_lfclk_request(NULL);
-  while (!nrf_drv_clock_lfclk_is_running()) {
-    // Ждём запуска генератора 32.768 кГц
-  }
-}
 
 // Таймер окна двойного клика истёк -> второго нажатия не было, сбрасываем
 // счётчик
@@ -68,11 +56,6 @@ static void button_event_handler(nrf_drv_gpiote_pin_t pin,
 void btn_init(void) {
   ret_code_t err_code;
 
-  // Запускаем LFCLK и модуль app_timer
-  lfclk_init();
-  err_code = app_timer_init();
-  APP_ERROR_CHECK(err_code);
-
   // Создаём оба таймера в режиме SINGLE_SHOT (одноразовые)
   err_code = app_timer_create(&m_debounce_timer, APP_TIMER_MODE_SINGLE_SHOT,
                               debounce_timeout_handler);
@@ -82,11 +65,6 @@ void btn_init(void) {
                               double_click_timeout_handler);
   APP_ERROR_CHECK(err_code);
 
-  // Инициализируем модуль GPIOTE, если он еще не инициализирован
-  if (!nrf_drv_gpiote_is_init()) {
-    err_code = nrf_drv_gpiote_init();
-    APP_ERROR_CHECK(err_code);
-  }
 
   // TOGGLE означает, что прерывание сработает и при нажатии, и при отпускании
   nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
