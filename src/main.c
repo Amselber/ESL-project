@@ -5,7 +5,7 @@
  */
 
 #include "app.h"
-// #include "log.h"
+#include "log.h"
 #include "app_error.h"
 #include "app_timer.h"
 #include "nrf_drv_clock.h"
@@ -45,12 +45,12 @@ int main(void) {
   lfclk_init();
   timer_init();
   gpiote_init();
-  // log_init();
+  log_init();
 
   app_init();
 
   while (true) {
-    // log_usb_process();
     app_process();
+    log_usb_process();
   }
 }

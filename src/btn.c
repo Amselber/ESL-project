@@ -2,9 +2,10 @@
 #include "app_error.h"
 #include "app_timer.h"
 #include "nrf_drv_gpiote.h"
+#include "nrf_log.h"
 #include <stdbool.h>
 
-#define DEBOUNCE_DELAY_MS      40  // Задержка от дребезга контактов
+#define DEBOUNCE_DELAY_MS 40       // Задержка от дребезга контактов
 #define DOUBLE_CLICK_WINDOW_MS 350 // Максимальная пауза между двумя кликами
 
 #define BUTTON NRF_GPIO_PIN_MAP(1, 6)
@@ -17,8 +18,10 @@ static volatile bool button_was_released = true;
 APP_TIMER_DEF(m_debounce_timer);
 APP_TIMER_DEF(m_double_click_timer);
 
+// Окно двойного клика истекло — значит, был только одиночный клик
 static void double_click_timeout_handler(void *p_context) {
   click_count = 0;
+  NRF_LOG_INFO("[BTN] Single click (ignored)");
 }
 
 static void debounce_timeout_handler(void *p_context) {
@@ -42,6 +45,9 @@ static void debounce_timeout_handler(void *p_context) {
       app_timer_stop(m_double_click_timer);
       click_count = 0;
       g_isBlinkingActive = !g_isBlinkingActive;
+
+      // Фиксируем двойной клик и новое состояние режима
+      NRF_LOG_INFO("Double click! Blinking active: %d", g_isBlinkingActive);
     }
   }
 }
@@ -72,4 +78,7 @@ void btn_init(void) {
   APP_ERROR_CHECK(err_code);
 
   nrf_drv_gpiote_in_event_enable(BUTTON, true);
+
+  // Подтверждение успешной настройки пина
+  NRF_LOG_INFO("[BTN] Initialized on pin %d", BUTTON);
 }
