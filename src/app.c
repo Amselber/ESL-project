@@ -2,6 +2,7 @@
 #include "btn.h"
 #include "led.h"
 #include "nrf_delay.h"
+#include "nrf_log.h"
 #include <stdint.h>
 
 #define FADE_STEP 5     // Шаг изменения яркости (скорость)
@@ -9,7 +10,7 @@
 #define HOLD_TICKS 50 // Сколько тиков держать 100% или 0% (50 * 2 мс = 100 мс)
 
 // device ID: #6593
-#define LEDS_BLINKS {6, 5, 9, 3};
+#define LEDS_BLINKS {6, 5, 9, 3}
 
 typedef enum {
   STATE_FADE_IN,  // Плавное разгорание (0% -> 100%)
@@ -22,90 +23,90 @@ static const uint8_t default_counter[LEDS_NUMBER] = LEDS_BLINKS;
 static uint8_t curr_counter[LEDS_NUMBER] = LEDS_BLINKS;
 static uint8_t curr_idx = 0;
 
-// Переменные состояния (сохраняются при отпускании кнопки)
-static blink_state_t state      = STATE_FADE_IN;
-static uint16_t      curr_duty  = 0;
-static uint16_t      hold_ticks = 0;
+// Переменные состояния (сохраняются при остановке)
+static blink_state_t state = STATE_FADE_IN;
+static uint16_t curr_duty = 0;
+static uint16_t hold_ticks = 0;
 
 /**
  * @brief Application init
- * run before app_proccess()
+ * run before app_process()
  */
 void app_init(void) {
   led_init();
   btn_init();
+  NRF_LOG_INFO("[APP] Initialized");
 }
 
 /**
  * @brief Application process
  * run in main loop
  */
-
 void app_process(void) {
-    // Если кнопка отпущена — просто выходим.
-    // Все переменные (state, curr_duty, curr_idx, hold_ticks) сохраняют свои значения!
-    if (!g_isBlinkingActive) {
-        return;
+  // Если режим мигания выключен — просто выходим.
+  // Все переменные (state, curr_duty, curr_idx, hold_ticks) сохраняют свои
+  // значения!
+  if (!g_isBlinkingActive) {
+    return;
+  }
+
+  // Проверяем, не закончилась ли последовательность всех 4 светодиодов
+  if (curr_idx >= LEDS_NUMBER) {
+    curr_idx = 0;
+    return;
+  }
+
+  // Если текущий светодиод отмигал своё количество раз — переходим к следующему
+  if (curr_counter[curr_idx] == 0) {
+    curr_counter[curr_idx] = default_counter[curr_idx];
+    ++curr_idx;
+    state = STATE_FADE_IN;
+    return;
+  }
+
+  // Основной конечный автомат
+  switch (state) {
+  case STATE_FADE_IN:
+    curr_duty += FADE_STEP;
+    if (curr_duty >= PWM_MAX_DUTY) {
+      curr_duty = PWM_MAX_DUTY;
+      led_idx_on(curr_idx);    // Явное включение на 100%
+      hold_ticks = HOLD_TICKS; // Заряжаем таймер удержания
+      state = STATE_LED_ON;
+    } else {
+      led_idx_set_duty(curr_idx, curr_duty);
     }
+    break;
 
-    // Проверяем, не закончилась ли последовательность всех 4 светодиодов
-    if (curr_idx >= LEDS_NUMBER) {
-        curr_idx = 0;
-        return;
+  case STATE_LED_ON:
+    if (hold_ticks > 0) {
+      --hold_ticks;
+    } else {
+      state = STATE_FADE_OUT;
     }
+    break;
 
-    // Если текущий светодиод отмигал своё количество раз — переходим к следующему
-    if (curr_counter[curr_idx] == 0) {
-        curr_counter[curr_idx] = default_counter[curr_idx];
-        ++curr_idx;
-        state = STATE_FADE_IN;
-        return;
+  case STATE_FADE_OUT:
+    if (curr_duty > FADE_STEP) {
+      curr_duty -= FADE_STEP;
+      led_idx_set_duty(curr_idx, curr_duty);
+    } else {
+      curr_duty = 0;
+      led_idx_off(curr_idx); // Явное выключение (0%)
+      hold_ticks = HOLD_TICKS;
+      state = STATE_LED_OFF;
     }
+    break;
 
-    // Основной конечный автомат
-    switch (state) {
-        case STATE_FADE_IN:
-            curr_duty += FADE_STEP;
-            if (curr_duty >= PWM_MAX_DUTY) {
-                curr_duty = PWM_MAX_DUTY;
-                led_idx_on(curr_idx);       // Явное включение на 100%
-                hold_ticks = HOLD_TICKS;    // Заряжаем таймер удержания
-                state = STATE_LED_ON;
-            } else {
-                led_idx_set_duty(curr_idx, curr_duty);
-            }
-            break;
-
-        case STATE_LED_ON:
-            // Держим светодиод включенным (если пауза не нужна, можно сразу менять state)
-            if (hold_ticks > 0) {
-                --hold_ticks;
-            } else {
-                state = STATE_FADE_OUT;
-            }
-            break;
-
-        case STATE_FADE_OUT:
-            if (curr_duty > FADE_STEP) {
-                curr_duty -= FADE_STEP;
-                led_idx_set_duty(curr_idx, curr_duty);
-            } else {
-                curr_duty = 0;
-                led_idx_off(curr_idx);      // Явное выключение (0%)
-                hold_ticks = HOLD_TICKS;
-                state = STATE_LED_OFF;
-            }
-            break;
-
-        case STATE_LED_OFF:
-            if (hold_ticks > 0) {
-                --hold_ticks;
-            } else {
-                --curr_counter[curr_idx];   // Один полный цикл мигания завершён
-                state = STATE_FADE_IN;
-            }
-            break;
+  case STATE_LED_OFF:
+    if (hold_ticks > 0) {
+      --hold_ticks;
+    } else {
+      --curr_counter[curr_idx]; // Один полный цикл мигания завершён
+      state = STATE_FADE_IN;
     }
+    break;
+  }
 
-    nrf_delay_ms(STEP_DELAY_MS);
+  nrf_delay_ms(STEP_DELAY_MS);
 }

@@ -23,15 +23,15 @@ static void lfclk_init(void) {
   }
 }
 
+// Инициализируем модуль App Timer
 static void timer_init(void) {
-  // Инициализируем модуль App Timer
   ret_code_t err_code = app_timer_init();
   APP_ERROR_CHECK(err_code);
 }
 
+// Инициализируем модуль GPIOTE
 static void gpiote_init(void) {
   ret_code_t err_code = app_timer_init();
-  // Инициализируем модуль GPIOTE, если он еще не инициализирован
   if (!nrf_drv_gpiote_is_init()) {
     err_code = nrf_drv_gpiote_init();
     APP_ERROR_CHECK(err_code);
