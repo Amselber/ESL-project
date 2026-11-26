@@ -5,12 +5,13 @@
 
 #define PWM_MAX_DUTY 1000 // 100% скважности (при частоте 1 кГц)
 
-#define LEDS_NUMBER 4
-
-#define LED_Y 0
-#define LED_R 1
-#define LED_G 2
-#define LED_B 3
+typedef enum {
+  LED_Y = 0,
+  LED_R,
+  LED_G,
+  LED_B,
+  LEDS_NUMBER // Автоматически равно 4
+} led_idx_t;
 
 void led_init(void);
 void led_idx_on(uint32_t led_idx);
